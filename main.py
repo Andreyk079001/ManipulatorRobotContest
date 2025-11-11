@@ -3,21 +3,22 @@ from domain.zones import Zone, ZoneManager
 from domain.movement_strategy import DynamicSpeedController
 from controllers.robot_controller import RobotController
 from domain.movement_strategy_maze import MazePathController
-from domain.led_indicator import GPIOLedIndicator
+from domain.led_indicator import UARTLedIndicator
+from domain.joint_zones import JointZone, JointZoneManager, VerticalZone, VerticalZoneManager
+from domain.movement_dynamic_joint import DynamicJointSpeedController
 
 
-def task1(manipulator):
-    # ограничение скорости
+def task1(manip):
     zones = [
-        Zone("green", (-0.20, 0.20), (-0.20, 0.20), (0.25, 0.45), 0.8),
-        Zone("yellow", (-0.30, 0.30), (-0.30, 0.30), (0.20, 0.50), 0.5),
-        Zone("red", (-0.35, 0.35), (-0.35, 0.35), (0.15, 0.55), 0.1),
+        VerticalZone("green", (0.35, 0.45), 0.8),  # верхняя безопасная зона
+        VerticalZone("yellow", (0.25, 0.35), 0.5), # средняя
+        VerticalZone("red", (0.15, 0.25), 0.2),    # нижняя — медленно
     ]
-    zone_manager = ZoneManager(zones)
-    strategy = DynamicSpeedController(manipulator, zone_manager)
-    controller = RobotController(manipulator, strategy)
-    controller.initialize()
-    controller.start()
+    zm = VerticalZoneManager(zones)
+    strategy = DynamicJointSpeedController(manip, zm)
+    ctrl = RobotController(manip, strategy)
+    ctrl.initialize()
+    ctrl.start()
 
 def task2(manipulator):
     # светодиодная индикация движения
@@ -26,7 +27,7 @@ def task2(manipulator):
     ]
     zone_manager = ZoneManager(zones)
     strategy = DynamicSpeedController(manipulator, zone_manager)
-    indicator = GPIOLedIndicator("/dev/ttyUSB0")
+    indicator = UARTLedIndicator("/dev/ttyUSB0")
     controller = RobotController(manipulator, strategy, indicator)
     controller.initialize()
     controller.start()

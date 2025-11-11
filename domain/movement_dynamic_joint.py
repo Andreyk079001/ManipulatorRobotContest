@@ -7,12 +7,13 @@ class DynamicJointSpeedController:
         self.prev_zone = None
 
     def execute(self):
-        print("Динамическое ограничение скорости по углам суставов...")
+        print("Динамическое ограничение скорости по вертикальной оси Z...")
         try:
-            self.manipulator._manipulator.set_servo_joint_jog_mode()
+            self.manipulator._manipulator.set_servo_twist_mode()
             while True:
-                base, shoulder, elbow = self.manipulator.get_joint_angles()
-                zone = self.zone_manager.get_zone(base, shoulder, elbow)
+                _, _, z = self.manipulator.get_coordinates()
+
+                zone = self.zone_manager.get_zone(z)
                 speed = zone.speed if zone else 0.1
 
                 if zone != self.prev_zone:
@@ -20,13 +21,10 @@ class DynamicJointSpeedController:
                     print(f"→ Зона: {name} | Скорость: {speed*100:.0f}%")
                     self.prev_zone = zone
 
-                self.manipulator._manipulator.stream_joint_angles(
-                    povorot_osnovaniya=base + 0.001,
-                    privod_plecha=shoulder,
-                    privod_strely=elbow,
-                    v_osnovaniya=0.2 * speed,
-                    v_plecha=0.1 * speed,
-                    v_strely=0.1 * speed
+                
+                self.manipulator.stream_velocity(
+                    {"x": 0.02 * speed, "y": 0, "z": 0},
+                    {"rx": 0, "ry": 0, "rz": 0}
                 )
 
                 time.sleep(0.1)

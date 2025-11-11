@@ -1,7 +1,7 @@
 import time, threading
 from interfaces.led_indicator_interface import IIndicator
 
-class GPIOLedIndicator(IIndicator):
+class UARTLedIndicator(IIndicator):
     def __init__(self, manipulator, gpio_name="/dev/gpiochip4/e1_pin"):
         self.manipulator = manipulator
         self.gpio_name = gpio_name
