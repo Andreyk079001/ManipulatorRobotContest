@@ -1,8 +1,8 @@
 from sdk.manipulators.medu import MEdu
-from sdk.commands.move_coordinates_command import MoveCoordinatesParamsPosition, MoveCoordinatesParamsOrientation
-from sdk.utils.enums import PlannerType
-from interfaces.i_manipulator import IManipulator
-
+from sdk.commands.move_coordinates_command import MoveCoordinatesParamsPosition, MoveCoordinatesParamsOrientation, \
+    PlannerType
+from interfaces.manipulator_interface import IManipulator
+import json
 class MEduManipulator(IManipulator):
     def __init__(self, host, client_id, login, password):
         self._manipulator = MEdu(host, client_id, login, password)
@@ -19,24 +19,34 @@ class MEduManipulator(IManipulator):
         except Exception as e:
             print(f"[SDK ERROR] get_control: {e}")
 
-    def move_to(self, position, orientation, velocity, acceleration):
+    def move_to(self, x, y, z):
         try:
-            self._manipulator.move_to_coordinates(
-                MoveCoordinatesParamsPosition(*position),
-                MoveCoordinatesParamsOrientation(*orientation),
-                velocity_scaling_factor=velocity,
-                acceleration_scaling_factor=acceleration,
-                planner_type=PlannerType.LIN,
-                timeout_seconds=20.0,
-                throw_error=True
-            )
+            position = MoveCoordinatesParamsPosition(x, y, z)
+            orientation = MoveCoordinatesParamsOrientation(0,0,0, 1.0)
+
+            self.manipulator.move_to_coordinates(position, orientation, velocity_scaling_factor=0.5, acceleration_scaling_factor=0.5,
+                                            planner_type=PlannerType.LIN, timeout_seconds=30.0, throw_error=True)
         except Exception as e:
             print(f"[SDK ERROR] move_to: {e}")
-
+    def move_to_angle(self, x,z,y):
+        try:
+            self._manipulator.move_to_angles(x,y,z,
+                                             velocity_factor=1.00,
+                               acceleration_factor=1.00
+            )
+        except Exception as e:
+            print(f"[SDK ERROR] move_to_angles: {e}")
     def get_coordinates(self):
         try:
-            coords = self._manipulator.get_cartesian_coordinates()
-            return coords["x"], coords["y"], coords["z"]
+            coordinates = self._manipulator.get_cartesian_coordinates()
+            data = json.loads(coordinates)
+
+            sx = data["tool1"]["position"]["x"]
+            sy = data["tool1"]["position"]["y"]
+            sz = data["tool1"]["position"]["z"]
+
+
+            return sx, sy, sz
         except Exception as e:
             print(f"[SDK ERROR] get_coordinates: {e}")
             return 0, 0, 0
@@ -44,11 +54,14 @@ class MEduManipulator(IManipulator):
     def get_joint_angles(self):
         try:
             state = self._manipulator.get_joint_state()
-            return (
-                state["povorot_osnovaniya"],
-                state["privod_plecha"],
-                state["privod_strely"]
-            )
+            data = json.loads(state)
+
+            sx = data["position"][0]
+            sy = data["position"][1]
+            sz = data["position"][2]
+
+
+            return sx, sy, sz
         except Exception as e:
             print(f"[SDK ERROR] get_joint_angles: {e}")
             return 0, 0, 0
