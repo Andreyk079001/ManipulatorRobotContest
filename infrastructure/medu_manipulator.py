@@ -41,6 +41,18 @@ class MEduManipulator(IManipulator):
             print(f"[SDK ERROR] get_coordinates: {e}")
             return 0, 0, 0
 
+    def get_joint_angles(self):
+        try:
+            state = self._manipulator.get_joint_state()
+            return (
+                state["povorot_osnovaniya"],
+                state["privod_plecha"],
+                state["privod_strely"]
+            )
+        except Exception as e:
+            print(f"[SDK ERROR] get_joint_angles: {e}")
+            return 0, 0, 0
+
     def stream_velocity(self, linear_vel, angular_vel):
         try:
             self._manipulator.set_servo_twist_mode()
